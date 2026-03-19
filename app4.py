@@ -81,7 +81,6 @@ button[data-baseweb="tab"] {
 
 (No logic changed, only UI improved)
 
-👉 NOTE FOR USER:
 
 Your original logic, functions, CSV handling, and calculations remain untouched.
 
