@@ -15,17 +15,39 @@ st.markdown("""
     .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
         background-color: white !important; border-radius: 8px !important; color: black !important;
     }
-    .blue-header { background-color: #0066FF; padding: 15px; border-radius: 10px; color: white; text-align: center; margin-bottom: 20px; }
+    /* Dashboard header උස සහ අකුරු ප්‍රමාණය අඩු කිරීම */
+    .blue-header { 
+        background-color: #0066FF; 
+        padding: 8px; 
+        border-radius: 10px; 
+        color: white; 
+        text-align: center; 
+        margin-bottom: 10px; 
+    }
+    .blue-header h1 { font-size: 18px !important; margin: 0; }
+    
     .sidebar-acc-box { background-color: white; padding: 10px; border-radius: 8px; margin-bottom: 5px; border: 1px solid #DDE1E7; }
     .total-balance-box { background-color: #0066FF; color: white; padding: 12px; border-radius: 8px; margin-top: 10px; text-align: center; }
     .list-total-box { background-color: #ffffff; padding: 10px; border-radius: 8px; border-left: 5px solid #0066FF; margin-bottom: 15px; }
+
+    /* Accounts card පෙනුම */
+    .acc-card {
+        background-color: white;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    .acc-card h4 { margin: 0; font-size: 13px; color: #333; }
+    .acc-card p { margin: 0; font-size: 15px; font-weight: bold; color: #0066FF; }
 </style>
 """, unsafe_allow_html=True)
 
 DB_FOLDER = "ravana_data"
 if not os.path.exists(DB_FOLDER): os.makedirs(DB_FOLDER)
 
-# --- 🛠️ HELPER FUNCTIONS ---
+# --- 🛠️ HELPER FUNCTIONS (Logic Unchanged) ---
 def load_data(name):
     path = os.path.join(DB_FOLDER, f"{name}.csv")
     if os.path.exists(path):
@@ -51,7 +73,6 @@ def load_meta(name):
     df_meta.to_csv(path, index=False)
     return df_meta
 
-# 🎯 NEW: AUTO-CLEAN INVALID TRANSFERS (ඔයා ඉල්ලපු විදියට Transfer එක මැකෙන කොටස)
 def clean_invalid_transfers(df_in, acc_list, p_name):
     temp_df = df_in.copy()
     changed = False
@@ -62,17 +83,13 @@ def clean_invalid_transfers(df_in, acc_list, p_name):
             t_in = temp_df[(temp_df['To_Account'] == acc) & (temp_df['Type'] == 'Transfer')]['Amount'].sum()
             exp = temp_df[(temp_df['Account'] == acc) & (temp_df['Type'] == 'Expense')]['Amount'].sum()
             t_out = temp_df[(temp_df['Account'] == acc) & (temp_df['Type'] == 'Transfer')]['Amount'].sum()
-            
             current_bal = (inc + t_in) - (exp + t_out)
-            
             if current_bal < 0:
                 transfers_from_acc = temp_df[(temp_df['Account'] == acc) & (temp_df['Type'] == 'Transfer')]
                 if not transfers_from_acc.empty:
                     last_id = transfers_from_acc.iloc[-1]['ID']
                     temp_df = temp_df[temp_df['ID'] != last_id]
-                    loop_changed = True
-                    changed = True
-                    break
+                    loop_changed = True; changed = True; break
         if not loop_changed: break
     if changed:
         temp_df.to_csv(os.path.join(DB_FOLDER, f"{p_name}.csv"), index=False)
@@ -96,7 +113,7 @@ if st.session_state.active_p is None:
         if st.button(f"📊 {p}", use_container_width=True): st.session_state.active_p = p; st.rerun()
 
 # ==========================================
-# 2️⃣ PART: LEFT & CORE LOGIC
+# 2️⃣ PART: MAIN INTERFACE
 # ==========================================
 else:
     p_name = st.session_state.active_p
@@ -104,8 +121,6 @@ else:
     meta = load_meta(p_name)
     acc_list = meta[meta["Type"] == "Account"]["Name"].tolist()
     cat_list = meta[meta["Type"] == "Category"]["Name"].tolist()
-
-    # 🎯 ගිණුමේ සල්ලි නැතිව සිදුකළ Transfers පද්ධතියෙන් ඉවත් කරයි
     df = clean_invalid_transfers(df, acc_list, p_name)
 
     if st.sidebar.button("🏠 Back to Home Page", use_container_width=True):
@@ -120,12 +135,8 @@ else:
     f_acc = st.sidebar.selectbox("From Account", [f"💳 {acc}" for acc in acc_list]).replace("💳 ", "")
     t_acc = st.sidebar.selectbox("To Account", [f"💳 {acc}" for acc in acc_list]).replace("💳 ", "") if t_type == "Transfer" else None
     
-    if t_type == "Income":
-        t_cat = "Income"
-        c_cat = ""
-    elif t_type == "Transfer":
-        t_cat = "Transfer"
-        c_cat = ""
+    if t_type == "Income": t_cat, c_cat = "Income", ""
+    elif t_type == "Transfer": t_cat, c_cat = "Transfer", ""
     else:
         t_cat = st.sidebar.selectbox("Category", cat_list + ["+ New Category"])
         c_cat = st.sidebar.text_input("Custom Category Name") if t_cat == "+ New Category" else ""
@@ -145,7 +156,6 @@ else:
 
     st.sidebar.divider()
     st.sidebar.subheader("💰 Accounts Balance")
-    
     actual_balances = {acc: 0.0 for acc in acc_list}
     for acc in acc_list:
         inc = df[(df['Account'] == acc) & (df['Type'] == 'Income')]['Amount'].sum() + df[(df['To_Account'] == acc) & (df['Type'] == 'Transfer')]['Amount'].sum()
@@ -171,9 +181,16 @@ else:
             if len(acc_list) > 1:
                 meta[meta["Name"] != r_acc].to_csv(os.path.join(DB_FOLDER, f"{p_name}_meta.csv"), index=False); st.rerun()
 
+    # --- MAIN CONTENT AREA ---
     st.markdown(f'<div class="blue-header"><h1>📊 {p_name} Dashboard</h1></div>', unsafe_allow_html=True)
+    
+    # අකුරු ප්‍රමාණය අඩු කළ Navigation Menu
     selected = option_menu(menu_title=None, options=["Transactions", "Insights", "Accounts"], orientation="horizontal",
-        styles={"container": {"background-color": "#0066FF", "border-radius": "0px"}, "nav-link": {"font-size": "22px", "color": "white", "font-weight": "bold"}, "nav-link-selected": {"background-color": "transparent"}})
+        styles={
+            "container": {"background-color": "#0066FF", "border-radius": "0px", "padding": "0px"},
+            "nav-link": {"font-size": "16px", "color": "white", "font-weight": "bold"},
+            "nav-link-selected": {"background-color": "rgba(255, 255, 255, 0.2)"}
+        })
 
     if selected == "Transactions":
         st.markdown("<br>", unsafe_allow_html=True)
@@ -201,15 +218,13 @@ else:
     elif selected == "Insights":
         st.markdown("<br>", unsafe_allow_html=True)
         it1, it2 = st.tabs(["📋 Summary", "💹 Category Analysis"])
-        inc_s = df[df['Type'] == 'Income']['Amount'].sum()
-        exp_s = df[df['Type'] == 'Expense']['Amount'].sum()
+        inc_s, exp_s = df[df['Type'] == 'Income']['Amount'].sum(), df[df['Type'] == 'Expense']['Amount'].sum()
         with it1:
             st.subheader("📜 Recent Data")
             st.dataframe(df[df['Type'] != 'Transfer'][['DateTime', 'Type', 'Category', 'Account', 'Amount']].iloc[::-1], use_container_width=True, hide_index=True)
             col_c, col_s = st.columns([2, 1])
             with col_c:
-                if inc_s > 0 or exp_s > 0:
-                    st.plotly_chart(px.pie(values=[inc_s, exp_s], names=['Income', 'Expense'], hole=0.5), use_container_width=True)
+                if inc_s > 0 or exp_s > 0: st.plotly_chart(px.pie(values=[inc_s, exp_s], names=['Income', 'Expense'], hole=0.5), use_container_width=True)
             with col_s:
                 st.metric("Total Income", f"{inc_s:,.0f}"); st.metric("Total Expense", f"{exp_s:,.0f}"); st.metric("Savings", f"{(inc_s-exp_s):,.0f}")
         with it2:
@@ -218,19 +233,12 @@ else:
             if not analysis_df.empty:
                 cat_sum = analysis_df.groupby(['Category', 'Type'])['Amount'].sum().reset_index()
                 st.plotly_chart(px.pie(cat_sum, values='Amount', names='Category', color='Type', hole=0.4), use_container_width=True)
-                c_inc, c_exp = st.columns(2)
-                with c_inc:
-                    st.markdown("#### 💰 Income Categories")
-                    for _, r in cat_sum[cat_sum['Type'] == 'Income'].iterrows():
-                        p = (r['Amount'] / inc_s * 100) if inc_s > 0 else 0
-                        st.write(f"**{r['Category']}**: Rs. {r['Amount']:,.0f} ({p:.1f}%)"); st.progress(min(p/100, 1.0))
-                with c_exp:
-                    st.markdown("#### 💸 Expense Categories")
-                    for _, r in cat_sum[cat_sum['Type'] == 'Expense'].iterrows():
-                        p = (r['Amount'] / inc_s * 100) if inc_s > 0 else 0
-                        st.write(f"**{r['Category']}**: Rs. {r['Amount']:,.0f} ({p:.1f}% of Inc)"); st.progress(min(p/100, 1.0))
 
     elif selected == "Accounts":
-        for acc in acc_list:
+        st.markdown("<br>", unsafe_allow_html=True)
+        # 🎯 පින්තූරයේ පරිදි Accounts ටික පේළියට සැකසීම
+        cols = st.columns(len(acc_list))
+        for idx, acc in enumerate(acc_list):
             bal = max(0, actual_balances[acc])
-            with st.container(border=True): st.markdown(f"### {acc}\n**Balance: Rs {bal:,.0f}**")
+            with cols[idx]:
+                st.markdown(f'<div class="acc-card"><h4>{acc}</h4><p>Rs. {bal:,.0f}</p></div>', unsafe_allow_html=True)
