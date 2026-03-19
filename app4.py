@@ -15,21 +15,16 @@ st.markdown("""
     .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
         background-color: white !important; border-radius: 8px !important; color: black !important;
     }
-    .blue-header { 
-        background-color: #0066FF; 
-        padding: 10px; 
-        border-radius: 10px; 
-        color: white; 
-        text-align: center; 
-        margin-bottom: 10px; 
-    }
-    .blue-header h1 { font-size: 24px !important; margin: 0; }
+    .blue-header { background-color: #0066FF; padding: 15px; border-radius: 10px; color: white; text-align: center; margin-bottom: 20px; }
+    .blue-header h1 { font-size: 22px !important; margin: 0; }
     .sidebar-acc-box { background-color: white; padding: 10px; border-radius: 8px; margin-bottom: 5px; border: 1px solid #DDE1E7; }
     .total-balance-box { background-color: #0066FF; color: white; padding: 12px; border-radius: 8px; margin-top: 10px; text-align: center; }
     .list-total-box { background-color: #ffffff; padding: 10px; border-radius: 8px; border-left: 5px solid #0066FF; margin-bottom: 15px; }
     
-    /* Navigation Menu එක තනි පේළියට තබා ගැනීමට අමතර CSS */
-    .nav-link { padding: 5px 10px !important; }
+    /* Responsive Fix for Navigation */
+    div[data-testid="stHorizontalBlock"] {
+        align-items: center;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -102,7 +97,7 @@ if st.session_state.active_p is None:
         if st.button(f"📊 {p}", use_container_width=True): st.session_state.active_p = p; st.rerun()
 
 # ==========================================
-# 2️⃣ PART: MAIN INTERFACE
+# 2️⃣ PART: CORE LOGIC
 # ==========================================
 else:
     p_name = st.session_state.active_p
@@ -169,26 +164,26 @@ else:
             if len(acc_list) > 1:
                 meta[meta["Name"] != r_acc].to_csv(os.path.join(DB_FOLDER, f"{p_name}_meta.csv"), index=False); st.rerun()
 
-    # --- MAIN CONTENT AREA ---
     st.markdown(f'<div class="blue-header"><h1>📊 {p_name} Dashboard</h1></div>', unsafe_allow_html=True)
     
-    # 🎯 මෙන්න ඔයා ඉල්ලපු විදිහට Menu එක එකම පේළියට එන විදිහට සැකසුවා
+    # 🎯 UI FIX: Font size reduced and padding adjusted for horizontal alignment
     selected = option_menu(
         menu_title=None, 
         options=["Transactions", "Insights", "Accounts"], 
         icons=['list-task', 'pie-chart', 'wallet2'], 
         orientation="horizontal",
         styles={
-            "container": {"background-color": "#0066FF", "border-radius": "10px", "padding": "0px"},
+            "container": {"padding": "0!important", "background-color": "#0066FF", "border-radius": "10px"},
+            "icon": {"color": "white", "font-size": "14px"}, 
             "nav-link": {
-                "font-size": "18px", 
-                "color": "white", 
-                "font-weight": "bold", 
+                "font-size": "15px", 
                 "text-align": "center", 
-                "margin": "0px",
-                "padding": "10px 0px"
+                "margin": "0px", 
+                "color": "white", 
+                "font-weight": "normal",
+                "padding": "10px 5px"
             },
-            "nav-link-selected": {"background-color": "rgba(255, 255, 255, 0.2)"},
+            "nav-link-selected": {"background-color": "rgba(255, 255, 255, 0.2)", "font-weight": "bold"},
         }
     )
 
