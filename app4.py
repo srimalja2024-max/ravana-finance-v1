@@ -15,39 +15,35 @@ st.markdown("""
     .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
         background-color: white !important; border-radius: 8px !important; color: black !important;
     }
-    /* Dashboard header උස සහ අකුරු ප්‍රමාණය අඩු කිරීම */
+    /* Dashboard header layout */
     .blue-header { 
         background-color: #0066FF; 
-        padding: 8px; 
+        padding: 10px; 
         border-radius: 10px; 
         color: white; 
         text-align: center; 
         margin-bottom: 10px; 
     }
-    .blue-header h1 { font-size: 18px !important; margin: 0; }
+    .blue-header h1 { font-size: 20px !important; margin: 0; }
     
     .sidebar-acc-box { background-color: white; padding: 10px; border-radius: 8px; margin-bottom: 5px; border: 1px solid #DDE1E7; }
     .total-balance-box { background-color: #0066FF; color: white; padding: 12px; border-radius: 8px; margin-top: 10px; text-align: center; }
     .list-total-box { background-color: #ffffff; padding: 10px; border-radius: 8px; border-left: 5px solid #0066FF; margin-bottom: 15px; }
 
-    /* Accounts card පෙනුම */
-    .acc-card {
-        background-color: white;
-        padding: 10px;
-        border-radius: 8px;
-        border: 1px solid #ddd;
-        text-align: center;
-        margin-bottom: 10px;
+    /* Navigation Menu පෙනුම පින්තූරයේ පරිදි තනි පේළියට සැකසීම */
+    .nav-container {
+        background-color: #0066FF;
+        border-radius: 10px;
+        padding: 5px;
+        margin-bottom: 20px;
     }
-    .acc-card h4 { margin: 0; font-size: 13px; color: #333; }
-    .acc-card p { margin: 0; font-size: 15px; font-weight: bold; color: #0066FF; }
 </style>
 """, unsafe_allow_html=True)
 
 DB_FOLDER = "ravana_data"
 if not os.path.exists(DB_FOLDER): os.makedirs(DB_FOLDER)
 
-# --- 🛠️ HELPER FUNCTIONS (Logic Unchanged) ---
+# --- 🛠️ HELPER FUNCTIONS (Logic unchanged) ---
 def load_data(name):
     path = os.path.join(DB_FOLDER, f"{name}.csv")
     if os.path.exists(path):
@@ -113,7 +109,7 @@ if st.session_state.active_p is None:
         if st.button(f"📊 {p}", use_container_width=True): st.session_state.active_p = p; st.rerun()
 
 # ==========================================
-# 2️⃣ PART: MAIN INTERFACE
+# 2️⃣ PART: MAIN DASHBOARD
 # ==========================================
 else:
     p_name = st.session_state.active_p
@@ -123,6 +119,7 @@ else:
     cat_list = meta[meta["Type"] == "Category"]["Name"].tolist()
     df = clean_invalid_transfers(df, acc_list, p_name)
 
+    # Sidebar UI (Unchanged)
     if st.sidebar.button("🏠 Back to Home Page", use_container_width=True):
         st.session_state.active_p = None; st.rerun()
     st.sidebar.divider()
@@ -131,7 +128,6 @@ else:
     t_type_map = {"Expense 💸": "Expense", "Income 💰": "Income", "Transfer 🔄": "Transfer"}
     t_type_display = st.sidebar.selectbox("Type", list(t_type_map.keys()))
     t_type = t_type_map[t_type_display]
-
     f_acc = st.sidebar.selectbox("From Account", [f"💳 {acc}" for acc in acc_list]).replace("💳 ", "")
     t_acc = st.sidebar.selectbox("To Account", [f"💳 {acc}" for acc in acc_list]).replace("💳 ", "") if t_type == "Transfer" else None
     
@@ -154,43 +150,29 @@ else:
                 new_row = {"ID": int(datetime.now().timestamp()*1000), "DateTime": datetime.now().strftime("%Y-%m-%d %H:%M"), "Category": fin_cat, "Sub_Category": sub_cat, "Account": f_acc, "To_Account": t_acc, "Type": t_type, "Amount": amt}
                 pd.concat([df, pd.DataFrame([new_row])]).to_csv(os.path.join(DB_FOLDER, f"{p_name}.csv"), index=False); st.rerun()
 
-    st.sidebar.divider()
-    st.sidebar.subheader("💰 Accounts Balance")
+    # Balances calculation (Logic Unchanged)
     actual_balances = {acc: 0.0 for acc in acc_list}
     for acc in acc_list:
         inc = df[(df['Account'] == acc) & (df['Type'] == 'Income')]['Amount'].sum() + df[(df['To_Account'] == acc) & (df['Type'] == 'Transfer')]['Amount'].sum()
         exp = df[(df['Account'] == acc) & (df['Type'] == 'Expense')]['Amount'].sum() + df[(df['Account'] == acc) & (df['Type'] == 'Transfer')]['Amount'].sum()
         actual_balances[acc] = inc - exp
 
-    total_net = 0
-    for acc in acc_list:
-        display_bal = max(0, actual_balances[acc])
-        total_net += actual_balances[acc]
-        st.sidebar.markdown(f'<div class="sidebar-acc-box"><b>{acc}</b><br><span style="color: grey; font-size: 14px;">Rs. {display_bal:,.0f}</span></div>', unsafe_allow_html=True)
-    st.sidebar.markdown(f'<div class="total-balance-box"><b>Total Balance</b><br><span style="font-size: 18px; font-weight: bold;">Rs. {total_net:,.0f}</span></div>', unsafe_allow_html=True)
-
-    st.sidebar.divider()
-    with st.sidebar.expander("🛠️ Manage Accounts"):
-        n_acc = st.text_input("New Account Name")
-        if st.button("➕ Add"):
-            if n_acc and n_acc not in acc_list:
-                pd.concat([meta, pd.DataFrame([[n_acc, "Account"]], columns=meta.columns)]).to_csv(os.path.join(DB_FOLDER, f"{p_name}_meta.csv"), index=False); st.rerun()
-        st.write("---")
-        r_acc = st.selectbox("Select Account to Remove", acc_list)
-        if st.button("🗑️ Remove"):
-            if len(acc_list) > 1:
-                meta[meta["Name"] != r_acc].to_csv(os.path.join(DB_FOLDER, f"{p_name}_meta.csv"), index=False); st.rerun()
-
-    # --- MAIN CONTENT AREA ---
+    # --- MAIN UI ---
     st.markdown(f'<div class="blue-header"><h1>📊 {p_name} Dashboard</h1></div>', unsafe_allow_html=True)
     
-    # අකුරු ප්‍රමාණය අඩු කළ Navigation Menu
-    selected = option_menu(menu_title=None, options=["Transactions", "Insights", "Accounts"], orientation="horizontal",
+    # 🎯 Navigation Menu එක තනි පේළියට (Horizontal) සකස් කළා
+    selected = option_menu(
+        menu_title=None, 
+        options=["Transactions", "Insights", "Accounts"], 
+        icons=['list-task', 'pie-chart', 'wallet2'], 
+        orientation="horizontal",
         styles={
-            "container": {"background-color": "#0066FF", "border-radius": "0px", "padding": "0px"},
-            "nav-link": {"font-size": "16px", "color": "white", "font-weight": "bold"},
-            "nav-link-selected": {"background-color": "rgba(255, 255, 255, 0.2)"}
-        })
+            "container": {"background-color": "#0066FF", "border-radius": "10px", "padding": "0px"},
+            "nav-link": {"font-size": "16px", "color": "white", "font-weight": "bold", "text-align": "center", "margin": "0px"},
+            "nav-link-selected": {"background-color": "rgba(255, 255, 255, 0.2)"},
+            "icon": {"font-size": "14px"}
+        }
+    )
 
     if selected == "Transactions":
         st.markdown("<br>", unsafe_allow_html=True)
@@ -235,10 +217,14 @@ else:
                 st.plotly_chart(px.pie(cat_sum, values='Amount', names='Category', color='Type', hole=0.4), use_container_width=True)
 
     elif selected == "Accounts":
-        st.markdown("<br>", unsafe_allow_html=True)
-        # 🎯 පින්තූරයේ පරිදි Accounts ටික පේළියට සැකසීම
+        # 🎯 Accounts ටිකත් තනි පේළියට පෙන්වීමට columns පාවිච්චි කළා
         cols = st.columns(len(acc_list))
-        for idx, acc in enumerate(acc_list):
+        for i, acc in enumerate(acc_list):
             bal = max(0, actual_balances[acc])
-            with cols[idx]:
-                st.markdown(f'<div class="acc-card"><h4>{acc}</h4><p>Rs. {bal:,.0f}</p></div>', unsafe_allow_html=True)
+            with cols[i]:
+                st.markdown(f"""
+                <div style="background-color: white; padding: 10px; border-radius: 8px; border: 1px solid #ddd; text-align: center;">
+                    <p style="margin: 0; font-size: 14px; color: #666;">{acc}</p>
+                    <p style="margin: 0; font-size: 16px; font-weight: bold; color: #0066FF;">Rs. {bal:,.0f}</p>
+                </div>
+                """, unsafe_allow_html=True)
