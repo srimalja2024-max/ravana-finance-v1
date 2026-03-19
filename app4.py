@@ -2,7 +2,6 @@
 
 import streamlit as st import pandas as pd import os from datetime import datetime import plotly.express as px from streamlit_option_menu import option_menu
 
---- ⚙️ GLOBAL CONFIG ---
 
 st.set_page_config( page_title="Ravana Finance Pro", layout="wide", page_icon="💰" )
 
