@@ -1,4 +1,4 @@
-import streamlit as st
+Import streamlit as st
 import pandas as pd
 import os
 from datetime import datetime
@@ -244,3 +244,19 @@ else:
         for acc in acc_list:
             bal = max(0, actual_balances[acc])
             with st.container(border=True): st.markdown(f"### {acc}\n**Balance: Rs {bal:,.0f}**")
+
+
+Do NOT remove any existing functions
+Do NOT modify logic
+Only update UI / CSS
+Keep everything else exactly same
+
+මෙය working code එකක්.
+- කිසිම existing function එක delete කරන්න එපා
+- logic change කරන්න එපා
+- UI (CSS / design) විතරක් update කරන්න
+- full code එක rewrite කරන්න එපා
+- only modify relevant parts
+
+
+Category detail වලට දෙයක් ඇතුලත් කරල save කලාට පස්සේ ඒක කොටුව clear වෙන්නේ නෑ..එටන විතරක්ම හදන්න
