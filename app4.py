@@ -124,9 +124,8 @@ else:
         t_cat = st.sidebar.selectbox("Category", cat_list + ["+ New Category"])
         c_cat = st.sidebar.text_input("Custom Category Name") if t_cat == "+ New Category" else ""
     
-    sub_cat = st.sidebar.text_input("Category detail", placeholder="Enter details here...") if t_type != "Transfer" else ""
-
     with st.sidebar.form("left_entry_form", clear_on_submit=True):
+        sub_cat = st.text_input("Category detail", placeholder="Enter details here...") if t_type != "Transfer" else ""
         amt = st.number_input("Amount (LKR)", min_value=0.0, value=None, placeholder="0.00")
         if st.form_submit_button("✅ Save Data"):
             if amt is not None and amt > 0:
@@ -166,7 +165,6 @@ else:
 
     st.markdown(f'<div class="blue-header"><h1>📊 {p_name} Dashboard</h1></div>', unsafe_allow_html=True)
     
-    # 🎯 UI FIX: Font size reduced and padding adjusted for horizontal alignment
     selected = option_menu(
         menu_title=None, 
         options=["Transactions", "Insights", "Accounts"], 
@@ -244,19 +242,3 @@ else:
         for acc in acc_list:
             bal = max(0, actual_balances[acc])
             with st.container(border=True): st.markdown(f"### {acc}\n**Balance: Rs {bal:,.0f}**")
-
-
-Do NOT remove any existing functions
-Do NOT modify logic
-Only update UI / CSS
-Keep everything else exactly same
-
-මෙය working code එකක්.
-- කිසිම existing function එක delete කරන්න එපා
-- logic change කරන්න එපා
-- UI (CSS / design) විතරක් update කරන්න
-- full code එක rewrite කරන්න එපා
-- only modify relevant parts
-
-
-Category detail වලට දෙයක් ඇතුලත් කරල save කලාට පස්සේ ඒක කොටුව clear වෙන්නේ නෑ..එටන විතරක්ම හදන්න
