@@ -472,4 +472,3 @@ else:
         for acc in acc_list:
             bal = max(0, actual_balances[acc])
             with st.container(border=True): st.markdown(f"### {acc}\n**Balance: Rs {bal:,.0f}**")
-
